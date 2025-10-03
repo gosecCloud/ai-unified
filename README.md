@@ -284,8 +284,7 @@ MIT License - see [LICENSE](./LICENSE) file for details.
 
 ## 📞 Support
 
-- 📧 Email: support@ai-unified.dev
-- 💬 Discord: [Join our community](https://discord.gg/ai-unified)
+- 📧 Email: support@gosec.cloud
 - 🐛 Issues: [GitHub Issues](https://github.com/yourusername/ai-unified/issues)
 
 ---
