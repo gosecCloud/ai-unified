@@ -1,0 +1,75 @@
+name: Quality Checks
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    name: Code Quality Checks
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check for TODO markers
+        run: ./scripts/check-todo-markers.sh
+
+      - name: Check for placeholder data
+        run: ./scripts/check-placeholders.sh
+
+      - name: Audit dependencies
+        run: ./scripts/check-dependencies.sh
+        continue-on-error: true # Warnings shouldn't fail the build
+
+      - name: TypeScript type check
+        run: pnpm build
+
+      - name: Lint
+        run: pnpm lint || echo "⚠️ Linting not configured yet"
+        continue-on-error: true
+
+  build:
+    runs-on: ubuntu-latest
+    name: Build All Packages
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Check build artifacts
+        run: |
+          echo "✅ Checking build outputs..."
+          find packages/*/dist -name "*.js" -o -name "*.d.ts" | head -20

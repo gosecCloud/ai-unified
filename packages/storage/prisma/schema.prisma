@@ -1,0 +1,234 @@
+// AI Unified Database Schema
+// Supports: PostgreSQL, MySQL, SQLite, SQL Server
+
+datasource db {
+  provider = "postgresql" // Change to: mysql, sqlite, sqlserver, mongodb
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+/// AI providers (OpenAI, Anthropic, etc.)
+model Provider {
+  id        String   @id
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  apiKeys  ApiKey[]
+  models   Model[]
+  requests Request[]
+
+  @@map("providers")
+}
+
+/// Encrypted API keys
+model ApiKey {
+  id              String    @id @default(cuid())
+  providerId      String    @map("provider_id")
+  alias           String
+  keyCiphertext   String    @map("key_ciphertext") @db.Text
+  status          String    @default("active") // active, invalid, expired, revoked
+  scopes          String[] // Provider-specific scopes
+  createdAt       DateTime  @default(now()) @map("created_at")
+  lastValidatedAt DateTime? @map("last_validated_at")
+  metadata        Json?
+
+  // Relations
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, alias])
+  @@index([providerId])
+  @@index([status])
+  @@map("api_keys")
+}
+
+/// AI models (cached from providers)
+model Model {
+  id                 String   @id @default(cuid())
+  providerId         String   @map("provider_id")
+  modelId            String   @map("model_id")
+  kind               String // chat, embed, image, audio, rerank, tool
+  contextWindow      Int?     @map("context_window")
+  maxOutputTokens    Int?     @map("max_output_tokens")
+  modalities         String[] // text, image, audio, video
+  deprecated         Boolean  @default(false)
+  costPerInputToken  Float?   @map("cost_per_input_token")
+  costPerOutputToken Float?   @map("cost_per_output_token")
+  metadata           Json?
+  cachedAt           DateTime @default(now()) @map("cached_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  provider Provider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  requests Request[]
+
+  @@unique([providerId, modelId])
+  @@index([providerId])
+  @@index([kind])
+  @@index([deprecated])
+  @@map("models")
+}
+
+/// Request logs
+model Request {
+  id           String   @id @default(cuid())
+  timestamp    DateTime @default(now())
+  providerId   String   @map("provider_id")
+  modelId      String   @map("model_id")
+  latencyMs    Int      @map("latency_ms")
+  tokensIn     Int?     @map("tokens_in")
+  tokensOut    Int?     @map("tokens_out")
+  cost         Float?
+  status       String // success, error, timeout, rate_limited
+  errorMessage String?  @map("error_message") @db.Text
+  metadata     Json?
+
+  // Relations
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  model    Model    @relation(fields: [providerId, modelId], references: [providerId, modelId], onDelete: Cascade)
+
+  @@index([providerId])
+  @@index([modelId])
+  @@index([timestamp])
+  @@index([status])
+  @@map("requests")
+}
+
+// =========================================================================
+// CODING AGENTS - Tables for autonomous coding agents layer
+// =========================================================================
+
+/// Workspaces (sandboxed directories for agent execution)
+model Workspace {
+  id                String   @id @default(cuid())
+  name              String
+  rootPath          String   @map("root_path")
+  allowedPaths      String[] @map("allowed_paths")
+  forbiddenPaths    String[] @map("forbidden_paths")
+  allowedCommands   String[] @map("allowed_commands")
+  forbiddenCommands String[] @map("forbidden_commands")
+  maxFileSizeBytes  Int?     @map("max_file_size_bytes")
+  maxFilesPerOp     Int?     @map("max_files_per_op")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  metadata          Json?
+
+  // Relations
+  jobs AgentJob[]
+
+  @@unique([name])
+  @@map("workspaces")
+}
+
+/// Coding agents (Claude Code, Gemini CLI, Codex)
+model Agent {
+  id           String    @id
+  name         String
+  version      String
+  binaryPath   String    @map("binary_path")
+  capabilities String[] // code-edit, code-generate, shell, file-read, etc.
+  requiredEnv  String[]  @map("required_env")
+  installed    Boolean   @default(false)
+  lastDetected DateTime? @map("last_detected")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  metadata     Json?
+
+  // Relations
+  jobs AgentJob[]
+
+  @@map("agents")
+}
+
+/// Agent jobs (task definitions)
+model AgentJob {
+  id           String   @id @default(cuid())
+  workspaceId  String   @map("workspace_id")
+  agentId      String   @map("agent_id")
+  task         String   @db.Text
+  contextFiles String[] @map("context_files")
+  profileName  String   @map("profile_name")
+  allowNetwork Boolean  @map("allow_network")
+  allowShell   Boolean  @map("allow_shell")
+  timeoutMs    Int      @map("timeout_ms")
+  env          Json?
+  cwd          String?
+  status       String   @default("queued") // queued, running, completed, failed, cancelled
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  metadata     Json?
+
+  // Relations
+  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  agent     Agent      @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  runs      AgentRun[]
+
+  @@index([workspaceId])
+  @@index([agentId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("agent_jobs")
+}
+
+/// Agent runs (execution instances)
+model AgentRun {
+  id           String    @id @default(cuid())
+  jobId        String    @map("job_id")
+  status       String    @default("pending") // pending, running, completed, failed, cancelled
+  exitCode     Int?      @map("exit_code")
+  startedAt    DateTime  @default(now()) @map("started_at")
+  completedAt  DateTime? @map("completed_at")
+  tokensUsed   Int?      @map("tokens_used")
+  cost         Float?
+  errorMessage String?   @map("error_message") @db.Text
+
+  // Relations
+  job       AgentJob     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  artifacts Artifact[]
+  events    AgentEvent[]
+
+  @@index([jobId])
+  @@index([status])
+  @@index([startedAt])
+  @@map("agent_runs")
+}
+
+/// Artifacts (files produced by agents)
+model Artifact {
+  id        String   @id @default(cuid())
+  runId     String   @map("run_id")
+  path      String
+  operation String // create, update, delete
+  content   String?  @db.Text
+  diff      String?  @db.Text
+  timestamp DateTime @default(now())
+
+  // Relations
+  run AgentRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@index([timestamp])
+  @@map("artifacts")
+}
+
+/// Agent events (execution log)
+model AgentEvent {
+  id        String   @id @default(cuid())
+  runId     String   @map("run_id")
+  type      String // task_start, task_complete, tool_use, file_edit, shell_exec, error, progress
+  timestamp DateTime @default(now())
+  data      Json
+  sequence  Int
+
+  // Relations
+  run AgentRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@index([timestamp])
+  @@index([sequence])
+  @@map("agent_events")
+}

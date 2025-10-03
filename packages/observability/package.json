@@ -1,0 +1,33 @@
+{
+  "name": "@aiu/observability",
+  "version": "0.1.0",
+  "description": "Logging, metrics, and tracing for AI Unified",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@aiu/core": "workspace:*",
+    "pino": "^8.17.2",
+    "pino-pretty": "^10.3.1"
+  },
+  "keywords": ["logging", "observability", "metrics"],
+  "license": "MIT"
+}

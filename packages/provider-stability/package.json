@@ -1,0 +1,35 @@
+{
+  "name": "@aiu/provider-stability",
+  "version": "0.1.0",
+  "description": "Stability AI provider adapter for AI Unified",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@aiu/core": "workspace:*",
+    "@aiu/transport": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "ai",
+    "stability",
+    "stable-diffusion",
+    "image-generation"
+  ],
+  "author": "",
+  "license": "MIT"
+}

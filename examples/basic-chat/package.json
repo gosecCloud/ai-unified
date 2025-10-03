@@ -1,0 +1,26 @@
+{
+  "name": "basic-chat-example",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@aiu/core": "workspace:*",
+    "@aiu/keyring": "workspace:*",
+    "@aiu/model-registry": "workspace:*",
+    "@aiu/observability": "workspace:*",
+    "@aiu/provider-anthropic": "workspace:*",
+    "@aiu/provider-openai": "workspace:*",
+    "@aiu/storage": "workspace:*",
+    "@aiu/transport": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}

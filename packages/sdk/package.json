@@ -1,0 +1,36 @@
+{
+  "name": "@aiu/sdk",
+  "version": "0.1.0",
+  "description": "Unified SDK orchestrator for AI Unified",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@aiu/core": "workspace:*",
+    "@aiu/transport": "workspace:*",
+    "@aiu/keyring": "workspace:*",
+    "@aiu/storage": "workspace:*",
+    "@aiu/model-registry": "workspace:*",
+    "@aiu/observability": "workspace:*"
+  },
+  "keywords": ["sdk", "orchestrator", "ai"],
+  "license": "MIT"
+}

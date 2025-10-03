@@ -1,0 +1,39 @@
+{
+  "name": "@aiu/cli",
+  "version": "0.1.0",
+  "description": "Command-line interface for AI Unified",
+  "type": "module",
+  "bin": {
+    "aiu": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@aiu/core": "workspace:*",
+    "@aiu/sdk": "workspace:*",
+    "@aiu/agents": "workspace:*",
+    "@aiu/keyring": "workspace:*",
+    "@aiu/model-registry": "workspace:*",
+    "@aiu/storage": "workspace:*",
+    "@aiu/observability": "workspace:*",
+    "@aiu/provider-openai": "workspace:*",
+    "@aiu/provider-anthropic": "workspace:*",
+    "commander": "^11.1.0",
+    "chalk": "^5.3.0",
+    "ora": "^8.0.1",
+    "inquirer": "^9.2.12"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.7"
+  },
+  "keywords": ["cli", "command-line", "ai"],
+  "license": "MIT"
+}
